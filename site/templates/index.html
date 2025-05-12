@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabela Orçamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div style="position: absolute; top: 5px; right: 20px; font-size: 11px; color: #aaa;">
+    by Allan Moura e Esther Fleury
+    </div>
+    <h1>Planilha de Orçamento de obras</h1>
+
+    <div style="text-align:center;">
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".xlsx" required>
+            <button type="submit">Enviar</button>
+        </form>
+        <button id="botao-filtro" onclick="filtrarVermelhos()">Mostrar apenas vermelhos</button>
+    </div>
+
+    {% if table_data %}
+    <h2>Resultado Processado</h2>
+
+    {% if totais %}
+<div class="total-box">
+    <h3>Totais</h3>
+    <table class="totais">
+        <thead>
+            <tr>
+                {% for label in totais.keys() %}
+                    <th>{{ label }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% for valor in totais.values() %}
+                    <td>R$ {{ "{:,.2f}".format(valor).replace(",", "X").replace(".", ",").replace("X", ".") }}</td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+    <div class="table-container" id="tabela-scroll">
+        <table>
+            <thead>
+                <tr class="agrupador">
+                    <th colspan="4">Estrutura Orçamentária</th>
+                    <th colspan="3">Saldo Solicitação </th>
+                    <th colspan="3">Previsto</th>
+                    <th colspan="2">Solicitação</th>
+                    <th colspan="2">Pedido</th>
+                    <th colspan="2">Contrato</th>
+                    <th colspan="2">Estoque Reservado</th>
+                    <th colspan="2">Realizado</th>
+                    <th colspan="1">sit</th>
+                </tr>
+                <tr>
+                    {% for col in columns %}
+                    <th class="{% if col in ['Quant Saldo', 'Quant Previsto', 'Quant Solicitação', 'Quant Pedido', 'Quant Estoque Reservado', 'Quant Realizado','sit orcamento'] %}divisor{% endif %}">
+                        {{ col }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in table_data %}
+                    <tr class="{% if row['sit orcamento'] == 1 %}ok{% elif row['sit orcamento'] == 0 %}erro{% elif row['sit orcamento'] == 2 %}neutro{% endif %}">
+                        {% for col in columns %}
+                        <td class="{% if col in ['Quant Saldo', 'Quant Previsto', 'Quant Solicitação', 'Quant Pedido', 'Quant Contrato', 'Quant Estoque Reservado', 'Quant Realizado', 'sit orcamento'] %}divisor{% endif %}">
+                            {% if "Valor" in col and row[col] != "" %}
+                                R$ {{ "{:,.2f}".format(row[col]).replace(",", "X").replace(".", ",").replace("X", ".") }}
+                            {% else %}
+                                {{ row[col] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Barra de rolagem fixa no rodapé -->
+    <div id="scroll-sync" class="scroll-fixed"></div>
+    {% endif %}
+    <footer style="text-align:center; font-size: 12px; margin-top: 40px; color: #888;">
+    Desenvolvido por <strong>Allan Henrique Vanto de Moura e Esther Fleury Koschewski</strong> • {{ year }}
+</footer>
+    <script>
+        let filtrando = false;
+
+        function filtrarVermelhos() {
+            const todasLinhas = document.querySelectorAll("tbody tr");
+            filtrando = !filtrando;
+
+            todasLinhas.forEach(linha => {
+                const isErro = linha.classList.contains("erro");
+                linha.style.display = (!filtrando || isErro) ? "" : "none";
+            });
+
+            const botao = document.getElementById("botao-filtro");
+            botao.innerText = filtrando ? "Mostrar todos" : "Mostrar apenas vermelhos";
+        }
+
+        window.addEventListener('load', function () {
+            const tabela = document.getElementById('tabela-scroll');
+            const barra = document.getElementById('scroll-sync');
+
+            // Clona a largura da tabela para a barra fixa
+            barra.innerHTML = `<div style="width:${tabela.scrollWidth}px;height:1px;"></div>`;
+
+            // Sincroniza rolagem das duas barras
+            barra.addEventListener('scroll', () => {
+                tabela.scrollLeft = barra.scrollLeft;
+            });
+            tabela.addEventListener('scroll', () => {
+                barra.scrollLeft = tabela.scrollLeft;
+            });
+        });
+    </script>
+
+</body>
+</html>
